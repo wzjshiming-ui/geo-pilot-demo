@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>774逃亡大挑战</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="hud">
+      <div class="brand">
+        <div class="brand__eyebrow">WASD 吞噬成长</div>
+        <h1>774逃亡大挑战</h1>
+        <p>开局 10 点伤害，只能吞掉比自己弱的怪物，一路成长挑战更强对手。</p>
+      </div>
+      <div class="stats">
+        <div class="stat-card">
+          <span>存活时间</span>
+          <strong id="survivalTime">0.0s</strong>
+        </div>
+        <div class="stat-card">
+          <span>总伤害</span>
+          <strong id="powerValue">0</strong>
+        </div>
+        <div class="stat-card">
+          <span>成长值</span>
+          <strong id="weaponCount">0</strong>
+        </div>
+        <div class="stat-card">
+          <span>击杀数</span>
+          <strong id="killCount">0</strong>
+        </div>
+      </div>
+      <div class="tips">
+        <span>移动：W A S D</span>
+        <span>越活越久、越往外跑越危险，前方会持续刷出强怪围猎你</span>
+      </div>
+    </div>
+
+    <canvas id="game"></canvas>
+
+    <div class="overlay hidden" id="overlay">
+      <div class="overlay__card">
+        <div class="overlay__tag" id="overlayTag">重新开始</div>
+        <h2 id="overlayTitle">你倒下了</h2>
+        <p id="overlayText">这次冒险结束了，按空格键再来一局。</p>
+        <button id="restartButton" type="button">空格 / 点击重新开始</button>
+      </div>
+    </div>
+
+    <script src="./game.js"></script>
+  </body>
+</html>

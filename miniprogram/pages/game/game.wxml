@@ -1,0 +1,74 @@
+<view class="page">
+  <canvas
+    id="gameCanvas"
+    type="2d"
+    class="game-canvas"
+  ></canvas>
+
+  <view class="hud">
+    <view class="brand-card">
+      <view class="eyebrow">774 生存逃亡</view>
+      <view class="title">774逃亡大挑战</view>
+      <view class="desc">头像可切换成你的微信头像或本地图片。越活越久、越往外围越危险。</view>
+    </view>
+
+    <view class="stats-card">
+      <view class="stat-item">
+        <text class="stat-label">存活时间</text>
+        <text class="stat-value">{{survivalTime}}</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-label">总伤害</text>
+        <text class="stat-value">{{power}}</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-label">成长值</text>
+        <text class="stat-value">{{growth}}</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-label">击杀数</text>
+        <text class="stat-value">{{kills}}</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-label">最佳纪录</text>
+        <text class="stat-value">{{bestTime}}</text>
+      </view>
+    </view>
+
+    <view class="tips-card">
+      <text>左下角透明摇杆移动</text>
+      <text>弱怪可吞，强怪会追；从屏幕外围猎进入</text>
+    </view>
+  </view>
+
+  <view class="avatar-actions">
+    <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseWechatAvatar">微信头像</button>
+    <button class="avatar-btn" bindtap="onChooseLocalAvatar">上传图片</button>
+  </view>
+
+  <view class="joystick-zone" catchtouchstart="onJoystickStart" catchtouchmove="onJoystickMove" catchtouchend="onJoystickEnd" catchtouchcancel="onJoystickEnd">
+    <view class="joystick-base {{joystickActive ? 'joystick-base--active' : ''}}">
+      <view class="joystick-stick" style="transform: translate({{joystickStickX}}px, {{joystickStickY}}px);"></view>
+    </view>
+  </view>
+
+  <view wx:if="{{showOverlay}}" class="overlay">
+    <view class="overlay-card">
+      <view class="overlay-tag">{{overlayTag}}</view>
+      <view class="overlay-title">{{overlayTitle}}</view>
+      <view class="overlay-text">{{overlayText}}</view>
+      <view class="overlay-records">
+        <view class="overlay-record">
+          <text class="overlay-record__label">本局存活</text>
+          <text class="overlay-record__value">{{survivalTime}}</text>
+        </view>
+        <view class="overlay-record">
+          <text class="overlay-record__label">最佳纪录</text>
+          <text class="overlay-record__value">{{bestTime}}</text>
+        </view>
+      </view>
+      <button wx:if="{{overlayAction === 'start'}}" class="restart-btn" bindtap="startFromOverlay">开始挑战</button>
+      <button wx:elif="{{overlayAction === 'restart'}}" class="restart-btn" bindtap="restartGame">立即重开</button>
+    </view>
+  </view>
+</view>
