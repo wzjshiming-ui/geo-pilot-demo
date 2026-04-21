@@ -1,4 +1,11 @@
 export type Priority = "高" | "中" | "低";
+export type PriorityTier = "S" | "A" | "B" | "暂缓";
+export type StrategyStage = "获客" | "教育" | "转化" | "截流" | "防御";
+export type StrategyMode = "单篇打法" | "系列打法" | "矩阵打法" | "集群打法";
+export type BrandAwareness = "新品牌" | "有一定认知" | "较高知名度";
+export type DecisionCost = "低" | "中" | "高";
+export type RiskLevel = "低" | "中" | "高";
+export type AccountType = "企业号" | "创始人号" | "垂类号" | "素人号" | "测评号" | "老账号" | "新账号";
 
 export type ArticleType = "标准问答型文章" | "口碑型文章" | "对比型文章" | "场景解决方案型文章";
 
@@ -53,6 +60,60 @@ export interface GeoTaskInput {
   aiPlatforms: string[];
   selectedDirections: DirectionId[];
   customPlatforms: string[];
+  brandAwareness: BrandAwareness;
+  decisionCost: DecisionCost;
+  negativeRisk: RiskLevel;
+}
+
+export interface CitationScore {
+  total: number;
+  readability: number;
+  qaMatch: number;
+  evidence: number;
+  multiPlatform: number;
+  suggestions: string[];
+}
+
+export interface DirectionPriorityDecision {
+  directionId: DirectionId;
+  tier: PriorityTier;
+  score: number;
+  reasons: string[];
+  stage: StrategyStage;
+  strategyMode: StrategyMode;
+}
+
+export interface DistributedRecommendation {
+  articleCount: number;
+  platformCount: number;
+  multipleAccounts: boolean;
+  multiVersion: boolean;
+  contentMix: string[];
+  rhythm: string;
+}
+
+export interface ContentCluster {
+  directionId: DirectionId;
+  mainTopic: string;
+  subTopics: string[];
+  contentPackage: string[];
+  totalPieces: number;
+  pillarThemes: string[];
+  longTailQuestions: string[];
+}
+
+export interface ContentVariant {
+  variantName: string;
+  angle: string;
+  sampleTitle: string;
+  bestPlatforms: string[];
+  outline: string[];
+}
+
+export interface EvidenceEnhancement {
+  missingSignals: string[];
+  recommendedSignals: string[];
+  whyBetterForAi: string[];
 }
 
 export interface GeoDirectionResult {
@@ -65,6 +126,7 @@ export interface GeoDirectionResult {
   titleIdeas: string[];
   contentStructures: string[];
   priority: Priority;
+  priorityDecision: DirectionPriorityDecision;
   publishPlatforms: string[];
   accountTypes: string[];
   reason: string;
@@ -74,6 +136,13 @@ export interface GeoDirectionResult {
   videoAngles: string[];
   proofSuggestions: string[];
   endorsementAdvice: string;
+  citationScore: CitationScore;
+  distributedRecommendation: DistributedRecommendation;
+  accountStrategy: string[];
+  recommendedOwnedMedia: string[];
+  cluster: ContentCluster;
+  variants: ContentVariant[];
+  evidenceEnhancement: EvidenceEnhancement;
 }
 
 export interface ArticleDraft {
@@ -93,6 +162,9 @@ export interface ArticleDraft {
   }>;
   closing: string;
   imageSuggestion: string;
+  citationScore: CitationScore;
+  variants: ContentVariant[];
+  evidenceEnhancement: EvidenceEnhancement;
 }
 
 export interface PlatformPublishingGuide {
@@ -104,6 +176,7 @@ export interface PlatformPublishingGuide {
   sections: string[];
   cadence: string;
   matrixAdvice: string[];
+  accountStrategyLines: string[];
 }
 
 export interface GeoStrategySummary {
@@ -114,13 +187,76 @@ export interface GeoStrategySummary {
   topDirections: string[];
   contentMatrix: string[];
   quickWins: string[];
+  distributedGoal: string;
+}
+
+export interface PriorityOverview {
+  sTier: string[];
+  aTier: string[];
+  bTier: string[];
+  holdTier: string[];
+}
+
+export interface DistributionMatrixCell {
+  directionId: DirectionId;
+  directionName: string;
+  platform: string;
+  recommended: boolean;
+  contentType: string;
+  accountType: string;
+  frequency: string;
+  articleCount: number;
+  multiVersion: boolean;
+}
+
+export interface ExecutionStep {
+  label: string;
+  focus: string;
+  articleCount: number;
+  platforms: string[];
+  accountTypes: string[];
+  directions: string[];
+  contentMix: string[];
+}
+
+export interface ExecutionPlan {
+  shortTerm: ExecutionStep[];
+  monthPlan: ExecutionStep[];
+}
+
+export interface GeoRiskReminder {
+  title: string;
+  items: string[];
+}
+
+export interface MonitoringPlaceholder {
+  contentPlatform: string;
+  publishedAt?: string;
+  accountType: string;
+  directionId: DirectionId;
+  deployed: boolean;
+  hasMultiVersion: boolean;
+  hasCaseStudy: boolean;
+  hasFaq: boolean;
+  hasComparison: boolean;
+  citationScore: number;
+  clicks?: number;
+  indexStatus?: string;
+  aiMentions?: number;
+  citedUrl?: string;
+  brandFrequency?: number;
 }
 
 export interface GeoGenerationResult {
   taskInput: GeoTaskInput;
   summary: GeoStrategySummary;
+  priorityOverview: PriorityOverview;
   directions: GeoDirectionResult[];
   publishingGuides: PlatformPublishingGuide[];
+  distributionMatrix: DistributionMatrixCell[];
+  executionPlan: ExecutionPlan;
   defaultArticles: ArticleDraft[];
+  riskReminder: GeoRiskReminder;
+  monitoringTemplate: MonitoringPlaceholder[];
   generatedAt: string;
 }

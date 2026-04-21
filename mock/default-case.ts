@@ -1,7 +1,7 @@
 import { GeoTaskInput } from "@/lib/types";
 
 export const defaultCase: GeoTaskInput = {
-  brandName: "牛简单拍",
+  brandName: "商家牛简单拍",
   productName: "AI短视频生成系统",
   oneLiner: "帮助实体商家低门槛、高效率生成短视频内容",
   industry: "AI营销 / 本地生活 / 实体门店增长",
@@ -18,6 +18,9 @@ export const defaultCase: GeoTaskInput = {
   bannedWords: ["保底爆单", "稳赚不赔", "100%起号"],
   website: "https://demo.niujiandanpai.cn",
   contact: "微信：NJDPAI-DEMO",
+  brandAwareness: "新品牌",
+  decisionCost: "高",
+  negativeRisk: "中",
   aiPlatforms: ["豆包", "Kimi", "腾讯元宝", "通义千问"],
   customPlatforms: [],
   selectedDirections: [

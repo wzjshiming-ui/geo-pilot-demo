@@ -145,6 +145,27 @@ export function ArticleLab() {
           </button>
         </div>
 
+        <div className="mb-5 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-3xl border border-slate-100 bg-white p-5">
+            <div className="mb-3 text-sm font-semibold text-slate-800">AI 引用友好度评分</div>
+            <div className="grid gap-2 text-sm text-slate-600">
+              <div>总分：{draft.citationScore.total}</div>
+              <div>可读性：{draft.citationScore.readability}</div>
+              <div>问答匹配度：{draft.citationScore.qaMatch}</div>
+              <div>证据感：{draft.citationScore.evidence}</div>
+              <div>多平台适配：{draft.citationScore.multiPlatform}</div>
+            </div>
+          </div>
+          <div className="rounded-3xl border border-slate-100 bg-white p-5">
+            <div className="mb-3 text-sm font-semibold text-slate-800">补强证据信号</div>
+            <div className="grid gap-2 text-sm text-slate-600">
+              {draft.evidenceEnhancement.recommendedSignals.slice(0, 5).map((item) => (
+                <div key={item}>• {item}</div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <article className="space-y-6">
           <section className="rounded-3xl border border-slate-100 bg-white p-5">
             <div className="mb-2 text-sm font-semibold text-slate-800">引言</div>
@@ -180,6 +201,19 @@ export function ArticleLab() {
             <div className="rounded-3xl border border-slate-100 bg-white p-5">
               <div className="mb-2 text-sm font-semibold text-slate-800">建议配图说明</div>
               <p className="text-sm leading-7 text-slate-600">{draft.imageSuggestion}</p>
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-slate-100 bg-white p-5">
+            <div className="mb-4 text-sm font-semibold text-slate-800">生成同主题不同表达版本</div>
+            <div className="grid gap-3 lg:grid-cols-2">
+              {draft.variants.map((variant) => (
+                <div key={variant.variantName} className="rounded-2xl bg-slate-50 px-4 py-4">
+                  <div className="font-medium text-slate-900">{variant.variantName}</div>
+                  <div className="mt-2 text-sm leading-6 text-slate-600">{variant.angle}</div>
+                  <div className="mt-2 text-sm text-brand-700">{variant.sampleTitle}</div>
+                </div>
+              ))}
             </div>
           </section>
         </article>

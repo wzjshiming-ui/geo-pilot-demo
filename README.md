@@ -1,24 +1,26 @@
 # GEO Pilot Demo
 
-一套面向中国市场的 GEO（Generative Engine Optimization，生成式搜索优化）内容生成系统 Web Demo。
+一套面向中国市场的 GEO（Generative Engine Optimization，生成式搜索优化）策略系统 Web Demo。
 
-这个项目使用 `Next.js + TypeScript + Tailwind CSS` 搭建，内置默认案例“牛简单拍”，打开后即可完整演示：
+这个项目使用 `Next.js + TypeScript + Tailwind CSS` 搭建，内置默认案例“商家牛简单拍”，打开后即可完整演示：
 
 - 创建 GEO 任务
 - 生成 GEO 策略结果
 - 查看单个方向详情
 - 生成文章草稿
 - 查看面向不同 AI 平台的发布建议
+- 查看 GEO 占位矩阵、内容集群、AI 引用评分和 30 天执行方案
 
 ## 项目特点
 
 - 中文界面，偏 SaaS Demo 风格
 - 内置 20 个 GEO 优化方向
 - 包含用户指定方向 + 额外补充的 8 个中国市场 GEO 方向
+- 不只是生成文章，还会输出优先级决策、AI 引用评分、分布式占位建议、内容集群和执行路径
 - 使用规则引擎 + 模板生成结果
 - 不依赖真实大模型 API
 - 结构清晰，方便未来替换为真实 LLM 接口
-- 默认内置“牛简单拍”完整案例，避免打开后空白
+- 默认内置“商家牛简单拍”完整案例，避免打开后空白
 
 ## 技术栈
 
@@ -69,7 +71,7 @@ npm run dev
 
 系统内置案例：
 
-- 品牌名称：牛简单拍
+- 品牌名称：商家牛简单拍
 - 产品名称：AI短视频生成系统
 - 一句话介绍：帮助实体商家低门槛、高效率生成短视频内容
 - 行业：AI营销 / 本地生活 / 实体门店增长
@@ -107,13 +109,24 @@ npm run dev
 - [lib/rule-engine.ts](/Users/shimingdediannao/Documents/New%20project/lib/rule-engine.ts)
 - [lib/geo-config.ts](/Users/shimingdediannao/Documents/New%20project/lib/geo-config.ts)
 - [mock/default-case.ts](/Users/shimingdediannao/Documents/New%20project/mock/default-case.ts)
+- [lib/geo-priority-engine.ts](/Users/shimingdediannao/Documents/New%20project/lib/geo-priority-engine.ts)
+- [lib/citation-score-engine.ts](/Users/shimingdediannao/Documents/New%20project/lib/citation-score-engine.ts)
+- [lib/distribution-matrix-engine.ts](/Users/shimingdediannao/Documents/New%20project/lib/distribution-matrix-engine.ts)
+- [lib/content-cluster-engine.ts](/Users/shimingdediannao/Documents/New%20project/lib/content-cluster-engine.ts)
+- [lib/evidence-enhancer.ts](/Users/shimingdediannao/Documents/New%20project/lib/evidence-enhancer.ts)
+- [lib/execution-plan-engine.ts](/Users/shimingdediannao/Documents/New%20project/lib/execution-plan-engine.ts)
 
 逻辑大致包括：
 
 - 根据品牌、产品、行业、人群、痛点、竞品生成问句模板
 - 根据方向生成推荐标题、内容结构和素材建议
-- 根据目标 AI 平台输出发布建议
+- 根据品牌认知、决策成本、负面风险做优先级分层
+- 根据内容结构、问答匹配度和证据信号输出 AI 引用友好度评分
+- 根据方向与平台生成分布式占位矩阵
+- 根据方向生成内容集群、变体版本和证据增强建议
+- 根据目标 AI 平台输出发布建议与账号策略
 - 根据选定方向和文章类型生成文章草稿
+- 自动给出 7 天 / 30 天执行计划
 
 未来如果要接真实模型 API，推荐优先替换以下接口：
 
@@ -146,7 +159,13 @@ components/
   section-card.tsx
   task-builder.tsx
 lib/
+  citation-score-engine.ts
+  content-cluster-engine.ts
+  distribution-matrix-engine.ts
+  evidence-enhancer.ts
+  execution-plan-engine.ts
   geo-config.ts
+  geo-priority-engine.ts
   rule-engine.ts
   storage.ts
   types.ts

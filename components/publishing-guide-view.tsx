@@ -56,6 +56,16 @@ export function PublishingGuideView() {
                 </div>
               </div>
             </div>
+            <div className="mt-4 rounded-3xl border border-slate-100 bg-white p-5">
+              <div className="mb-3 text-sm font-semibold text-slate-800">账号策略补充</div>
+              <div className="grid gap-2">
+                {guide.accountStrategyLines.map((item) => (
+                  <div key={item} className="rounded-2xl bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
           </SectionCard>
         ))}
       </div>

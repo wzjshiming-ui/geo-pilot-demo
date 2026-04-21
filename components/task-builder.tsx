@@ -67,7 +67,7 @@ export function TaskBuilder() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-      <SectionCard title="任务步骤" desc="按步骤填写即可，系统默认内置了“牛简单拍”演示案例。">
+      <SectionCard title="任务步骤" desc="按步骤填写即可，系统默认内置了“商家牛简单拍”演示案例。">
         <div className="space-y-3">
           {steps.map((item, index) => (
             <button
@@ -113,6 +113,18 @@ export function TaskBuilder() {
               <div className="md:col-span-2">
                 <Field label="联系方式（可选）" value={form.contact ?? ""} onChange={(v) => updateField("contact", v)} />
               </div>
+              <SelectField
+                label="品牌当前知名度"
+                value={form.brandAwareness}
+                onChange={(v) => updateField("brandAwareness", v as GeoTaskInput["brandAwareness"])}
+                options={["新品牌", "有一定认知", "较高知名度"]}
+              />
+              <SelectField
+                label="产品决策成本"
+                value={form.decisionCost}
+                onChange={(v) => updateField("decisionCost", v as GeoTaskInput["decisionCost"])}
+                options={["低", "中", "高"]}
+              />
             </div>
           </SectionCard>
         ) : null}
@@ -157,6 +169,12 @@ export function TaskBuilder() {
                 value={form.bannedWords.join("\n")}
                 onChange={(v) => updateField("bannedWords", parseMultiline(v))}
                 rows={3}
+              />
+              <SelectField
+                label="潜在负面搜索风险"
+                value={form.negativeRisk}
+                onChange={(v) => updateField("negativeRisk", v as GeoTaskInput["negativeRisk"])}
+                options={["低", "中", "高"]}
               />
             </div>
           </SectionCard>
@@ -276,6 +294,7 @@ export function TaskBuilder() {
                   <SummaryRow label="目标 AI 平台" value={form.aiPlatforms.join("、")} />
                   <SummaryRow label="已选方向" value={`${form.selectedDirections.length} 个`} />
                   <SummaryRow label="竞品" value={form.competitorBrands.join("、")} />
+                  <SummaryRow label="品牌认知 / 决策成本 / 风险" value={`${form.brandAwareness} / ${form.decisionCost} / ${form.negativeRisk}`} />
                 </div>
               </div>
 
@@ -365,6 +384,35 @@ function TextAreaField({
         onChange={(event) => onChange(event.target.value)}
         className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-brand-500"
       />
+    </label>
+  );
+}
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  options
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+}) {
+  return (
+    <label className="grid gap-2 text-sm text-slate-600">
+      <span className="font-medium text-slate-800">{label}</span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-12 rounded-2xl border border-slate-200 bg-white px-4 outline-none transition focus:border-brand-500"
+      >
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }

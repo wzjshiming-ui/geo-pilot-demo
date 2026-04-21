@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Copy, FileText, Layers3, Sparkles } from "lucide-react";
+import { ArrowRight, Copy, FileText, Layers3, Radar, Sparkles } from "lucide-react";
 import { SectionCard } from "@/components/section-card";
 import { generateGeoResult } from "@/lib/rule-engine";
 import { loadResult } from "@/lib/storage";
@@ -19,6 +19,7 @@ export function ResultsDashboard() {
   }, []);
 
   const topDirections = useMemo(() => result.summary.topDirections, [result]);
+  const topScored = useMemo(() => result.directions.slice(0, 5), [result]);
 
   return (
     <div className="space-y-6">
@@ -39,6 +40,11 @@ export function ResultsDashboard() {
             <SimpleList title="建议先做的内容矩阵" items={result.summary.contentMatrix} />
           </div>
 
+          <div className="mt-5 rounded-3xl border border-slate-100 bg-white p-5">
+            <div className="mb-3 text-sm font-semibold text-slate-800">产品定位升级后的目标</div>
+            <p className="text-sm leading-6 text-slate-600">{result.summary.distributedGoal}</p>
+          </div>
+
           <div className="mt-5 rounded-3xl border border-brand-100 bg-brand-50/80 p-5">
             <div className="mb-2 text-sm font-semibold text-brand-800">Quick Wins</div>
             <div className="grid gap-2 text-sm leading-6 text-brand-900">
@@ -52,6 +58,18 @@ export function ResultsDashboard() {
         <div className="space-y-6">
           <SectionCard title="操作区" desc="可以继续查看方向详情、生成文章，或直接复制结果摘要。">
             <div className="grid gap-3">
+              <AnchorButton href="#priority-panel" label="查看优先级决策" />
+              <AnchorButton href="#matrix-panel" label="查看占位矩阵" />
+              <AnchorButton href="#cluster-panel" label="查看内容集群" />
+              <AnchorButton href="#plan-panel" label="查看30天执行方案" />
+              <AnchorButton href="#score-panel" label="查看AI引用评分" />
+              <Link
+                href="/publishing"
+                className="inline-flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+              >
+                查看账号策略
+                <ArrowRight className="h-4 w-4" />
+              </Link>
               <Link
                 href="/articles"
                 className="inline-flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
@@ -87,15 +105,58 @@ export function ResultsDashboard() {
               默认演示流程已就绪
             </div>
             <p className="text-sm leading-7 text-brand-50">
-              即使没有重新填写表单，这个 Demo 也会自动加载“牛简单拍”的一套完整 GEO 结果，方便你一打开就能演示。
+              即使没有重新填写表单，这个 Demo 也会自动加载“商家牛简单拍”的一套完整 GEO 结果，方便你一打开就能演示。
             </p>
           </div>
         </div>
       </section>
 
       <SectionCard
+        title="GEO 优先级决策引擎"
+        desc="系统会自动判断哪些方向更值得优先做，避免把 GEO 理解成平均铺文。"
+        className="scroll-mt-24"
+      >
+        <div id="priority-panel" className="grid gap-4 lg:grid-cols-4">
+          <TierCard title="S 级优先方向" items={result.priorityOverview.sTier} tone="brand" />
+          <TierCard title="A 级优先方向" items={result.priorityOverview.aTier} tone="ink" />
+          <TierCard title="B 级可选方向" items={result.priorityOverview.bTier} tone="slate" />
+          <TierCard title="当前不建议先做" items={result.priorityOverview.holdTier} tone="sand" />
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="AI 引用友好度总览"
+        desc="系统会从问答匹配、结构清晰度、证据感和多平台适配度几个维度做评分。"
+        className="scroll-mt-24"
+      >
+        <div id="score-panel" className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {topScored.map((direction) => (
+            <div key={direction.id} className="rounded-3xl border border-slate-100 bg-white p-5">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-lg font-semibold text-ink">{direction.name}</div>
+                <div className="rounded-full bg-brand-50 px-3 py-1 text-sm font-semibold text-brand-700">
+                  {direction.citationScore.total}
+                </div>
+              </div>
+              <ScoreRow label="可读性" value={direction.citationScore.readability} />
+              <ScoreRow label="问答匹配度" value={direction.citationScore.qaMatch} />
+              <ScoreRow label="证据感" value={direction.citationScore.evidence} />
+              <ScoreRow label="多平台适配" value={direction.citationScore.multiPlatform} />
+              <div className="mt-4 grid gap-2">
+                {direction.citationScore.suggestions.slice(0, 2).map((item) => (
+                  <div key={item} className="rounded-2xl bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+
+      <SectionCard
         title="GEO 优化方向拆解"
-        desc="点击任意方向可进入详情页，继续查看问句、标题、素材建议和发布建议。"
+        desc="系统不只告诉你写什么，还会告诉你这个方向处于决策链哪一环、该用单篇还是矩阵打法。"
       >
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {result.directions.map((direction) => (
@@ -103,11 +164,17 @@ export function ResultsDashboard() {
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div>
                   <div className="text-lg font-semibold text-ink">{direction.name}</div>
-                  <div className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-400">优先级 {direction.priority}</div>
+                  <div className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-400">
+                    {direction.priorityDecision.tier} 级 / {direction.priorityDecision.stage} / {direction.priorityDecision.strategyMode}
+                  </div>
                 </div>
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">{direction.publishPlatforms[0]}</span>
               </div>
               <p className="text-sm leading-6 text-slate-500">{direction.explanation}</p>
+
+              <div className="mt-4 rounded-2xl border border-brand-100 bg-brand-50/70 px-4 py-3 text-sm leading-6 text-brand-900">
+                AI 引用友好度 {direction.citationScore.total} / 100
+              </div>
 
               <div className="mt-4 grid gap-2">
                 {direction.questionTemplates.slice(0, 3).map((item) => (
@@ -137,6 +204,81 @@ export function ResultsDashboard() {
         </div>
       </SectionCard>
 
+      <SectionCard
+        title="GEO 占位矩阵"
+        desc="横轴是 GEO 方向，纵轴是平台与账号类型。这个视图帮助判断应该做单点内容还是分布式占位。"
+        className="scroll-mt-24"
+      >
+        <div id="matrix-panel" className="overflow-x-auto">
+          <div className="min-w-[980px] space-y-3">
+            {result.distributionMatrix.slice(0, 30).map((cell) => (
+              <div key={`${cell.directionId}-${cell.platform}`} className="grid grid-cols-[180px_140px_140px_120px_120px_120px] gap-3 rounded-2xl border border-slate-100 bg-white p-4 text-sm">
+                <div className="font-medium text-slate-900">{cell.directionName}</div>
+                <div className="text-slate-600">{cell.platform}</div>
+                <div className={cell.recommended ? "text-brand-700" : "text-slate-400"}>{cell.recommended ? "建议布局" : "可延后"}</div>
+                <div className="text-slate-600">{cell.contentType}</div>
+                <div className="text-slate-600">{cell.accountType}</div>
+                <div className="text-slate-600">
+                  {cell.articleCount > 0 ? `${cell.articleCount} 篇 / ${cell.multiVersion ? "多版本" : "单版本"}` : "暂不优先"}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="内容集群视图"
+        desc="不是只看单篇文章，而是看这个方向应该拆成怎样的内容簇。"
+        className="scroll-mt-24"
+      >
+        <div id="cluster-panel" className="grid gap-4 lg:grid-cols-2">
+          {result.directions.slice(0, 4).map((direction) => (
+            <div key={direction.id} className="rounded-3xl border border-slate-100 bg-white p-5">
+              <div className="mb-2 flex items-center gap-2 text-sm text-brand-700">
+                <Radar className="h-4 w-4" />
+                {direction.name}
+              </div>
+              <div className="text-lg font-semibold text-ink">{direction.cluster.mainTopic}</div>
+              <div className="mt-4 grid gap-2">
+                {direction.cluster.subTopics.map((item) => (
+                  <div key={item} className="rounded-2xl bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                    {item}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 grid gap-2 text-sm text-slate-600">
+                {direction.cluster.contentPackage.map((item) => (
+                  <div key={item}>• {item}</div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="30 天执行路径"
+        desc="系统会按周拆分执行动作，告诉你该先铺什么、发到哪里、用什么账号承接。"
+        className="scroll-mt-24"
+      >
+        <div id="plan-panel" className="grid gap-4 lg:grid-cols-2">
+          {result.executionPlan.monthPlan.map((step) => (
+            <div key={step.label} className="rounded-3xl border border-slate-100 bg-white p-5">
+              <div className="text-lg font-semibold text-ink">{step.label}</div>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{step.focus}</p>
+              <div className="mt-4 grid gap-2 text-sm text-slate-600">
+                <div>建议写 {step.articleCount} 篇</div>
+                <div>建议平台：{step.platforms.join("、")}</div>
+                <div>建议账号：{step.accountTypes.join("、")}</div>
+                <div>建议方向：{step.directions.join("、")}</div>
+                <div>内容组合：{step.contentMix.join("、")}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+
       <SectionCard title="默认文章草稿预览" desc="系统会自动为重点方向生成一组可演示文章草稿。">
         <div className="grid gap-4 lg:grid-cols-2">
           {result.defaultArticles.map((article) => (
@@ -148,6 +290,16 @@ export function ResultsDashboard() {
                 打开文章工作台
                 <ArrowRight className="h-4 w-4" />
               </Link>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+
+      <SectionCard title={result.riskReminder.title} desc="系统内置低质量批量生成提醒，避免把 GEO 做成无差异灌水。">
+        <div className="grid gap-2">
+          {result.riskReminder.items.map((item) => (
+            <div key={item} className="rounded-2xl border border-accent-100 bg-accent-50 px-4 py-3 text-sm text-accent-600">
+              {item}
             </div>
           ))}
         </div>
@@ -175,6 +327,66 @@ function SimpleList({ title, items }: { title: string; items: string[] }) {
             {item}
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function ScoreRow({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="mt-2">
+      <div className="mb-1 flex items-center justify-between text-xs text-slate-500">
+        <span>{label}</span>
+        <span>{value}</span>
+      </div>
+      <div className="h-2 rounded-full bg-slate-100">
+        <div className="h-2 rounded-full bg-brand-700" style={{ width: `${value}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function AnchorButton({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      className="inline-flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+    >
+      {label}
+      <ArrowRight className="h-4 w-4" />
+    </a>
+  );
+}
+
+function TierCard({
+  title,
+  items,
+  tone
+}: {
+  title: string;
+  items: string[];
+  tone: "brand" | "ink" | "slate" | "sand";
+}) {
+  const toneClass = {
+    brand: "border-brand-100 bg-brand-50/80",
+    ink: "border-slate-200 bg-slate-50/80",
+    slate: "border-slate-100 bg-white",
+    sand: "border-amber-100 bg-amber-50/70"
+  }[tone];
+
+  return (
+    <div className={`rounded-3xl border p-5 ${toneClass}`}>
+      <div className="mb-3 text-sm font-semibold text-slate-800">{title}</div>
+      <div className="grid gap-2">
+        {items.length ? (
+          items.map((item) => (
+            <div key={item} className="rounded-2xl bg-white/80 px-3 py-2 text-sm text-slate-700">
+              {item}
+            </div>
+          ))
+        ) : (
+          <div className="text-sm text-slate-400">暂无</div>
+        )}
       </div>
     </div>
   );

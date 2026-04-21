@@ -68,7 +68,7 @@ export function LandingPage() {
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <div className="text-xs uppercase tracking-[0.24em] text-brand-200">Demo Snapshot</div>
-                <div className="mt-2 text-2xl font-semibold">牛简单拍</div>
+                <div className="mt-2 text-2xl font-semibold">商家牛简单拍</div>
               </div>
               <div className="rounded-full bg-white/10 px-3 py-1 text-sm text-brand-100">默认案例</div>
             </div>

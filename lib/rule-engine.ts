@@ -9,63 +9,89 @@ import {
   PlatformPublishingGuide,
   Priority
 } from "@/lib/types";
-import { DEFAULT_AI_PLATFORMS, DIRECTION_MAP, GEO_DIRECTIONS } from "@/lib/geo-config";
+import { DEFAULT_AI_PLATFORMS, DIRECTION_MAP } from "@/lib/geo-config";
+import { evaluateDirectionPriority, buildPriorityOverview } from "@/lib/geo-priority-engine";
+import { scoreCitationFriendliness } from "@/lib/citation-score-engine";
+import { buildDistributionMatrix } from "@/lib/distribution-matrix-engine";
+import { buildContentCluster, buildContentVariants } from "@/lib/content-cluster-engine";
+import { buildEvidenceEnhancement } from "@/lib/evidence-enhancer";
+import { buildExecutionPlan } from "@/lib/execution-plan-engine";
 
 const articleTypeTemplates: Record<ArticleType, { summaryTone: string; ending: string }> = {
   标准问答型文章: {
     summaryTone: "用明确答案和结构化信息，帮助 AI 快速理解并引用。",
-    ending: "如果你正在评估是否适合上手，最好的方式是先从一个真实经营场景开始验证。"
+    ending: "真正有效的 GEO，不是只发一篇，而是把问题、答案、场景和证据一起铺开。"
   },
   口碑型文章: {
     summaryTone: "强调真实反馈、适用人群与使用前后差异，方便形成口碑型引用。",
-    ending: "真正有效的口碑不是喊口号，而是让用户看到是否真的解决了自己的问题。"
+    ending: "如果一篇口碑文无法承接所有疑虑，那就应该继续拆成 FAQ、案例和对比内容矩阵。"
   },
   对比型文章: {
     summaryTone: "把方案差异、适合人群和投入产出比讲清楚，帮助用户快速决策。",
-    ending: "适合自己的工具，不是功能最多，而是最接近自己的业务场景。"
+    ending: "对比型内容最怕只有观点没有证据，所以要把适合谁和不适合谁都讲清楚。"
   },
   场景解决方案型文章: {
     summaryTone: "按真实业务情境给出可执行方案，便于平台和 AI 抽取关键信息。",
-    ending: "先把最常见的经营问题解决掉，后面的内容增长才会更稳定。"
+    ending: "场景型内容更适合做成系列，而不是只停留在单篇建议。"
   }
 };
 
 const platformGuideMap: Record<string, Omit<PlatformPublishingGuide, "platform">> = {
   豆包: {
-    recommendedChannels: ["知乎", "头条系内容阵地", "百家号", "公众号"],
+    recommendedChannels: ["知乎", "百家号", "公众号", "企业官网/blog"],
     platformTraits: "偏重中文问答、知识总结和高密度答案型内容，适合结构清晰、直给式内容。",
-    contentTypes: ["问答解析", "工具推荐", "场景教程", "口碑说明"],
-    accountSuggestions: ["企业号", "行业垂类号", "有内容积累的老号"],
+    contentTypes: ["问答解析", "工具推荐", "场景教程", "FAQ 解释"],
+    accountSuggestions: ["企业号", "垂类号", "老账号"],
     sections: ["问答", "经验", "知识", "行业观察"],
-    cadence: "每周 3 到 5 篇图文，优先做问答型和案例型。",
-    matrixAdvice: ["品牌词与痛点词并行", "知乎长文配百家号摘要", "案例内容定期复用"]
+    cadence: "每周 3 到 5 篇图文，优先做问题直答、FAQ 和案例型。",
+    matrixAdvice: ["品牌词与痛点词并行", "官网 FAQ 联动知乎长文", "同主题做 2 到 3 个表达版本"],
+    accountStrategyLines: [
+      "企业号适合承接品牌词、FAQ 和品牌解释型内容。",
+      "垂类号更适合痛点词、场景词和方法型内容。",
+      "老账号优先于新账号，更容易承接知识型内容。"
+    ]
   },
   Kimi: {
-    recommendedChannels: ["知乎", "公众号", "站长类内容站", "垂直媒体"],
+    recommendedChannels: ["知乎", "公众号", "站长类博客", "企业官网/blog"],
     platformTraits: "更适合引用结构化、完整度高、解释充分的长文本内容。",
     contentTypes: ["专题深度文", "选型指南", "FAQ 专栏", "案例拆解"],
     accountSuggestions: ["企业号", "创始人号", "专业顾问号"],
     sections: ["专栏", "深度文章", "行业洞察", "选型指南"],
-    cadence: "每周 2 到 4 篇长文，同时维护品牌 FAQ 页面。",
-    matrixAdvice: ["建立品牌百科页", "做行业专题合集", "把 FAQ 拆成独立页面"]
+    cadence: "每周 2 到 4 篇长文，同时维护 FAQ 页面与对比页。",
+    matrixAdvice: ["建立官网 FAQ 和对比页", "同主题做专业分析版与问答版", "长文和简版摘要并行"],
+    accountStrategyLines: [
+      "创始人号适合输出判断逻辑和行业观点。",
+      "企业号适合沉淀结构化 FAQ、功能页和案例页。",
+      "顾问号适合选型、对比和决策类内容。"
+    ]
   },
   腾讯元宝: {
-    recommendedChannels: ["公众号", "知乎", "腾讯生态内容位", "行业媒体"],
+    recommendedChannels: ["公众号", "知乎", "企业官网/blog", "行业媒体"],
     platformTraits: "适合可信来源、品牌背书和服务导向更强的内容资产。",
     contentTypes: ["品牌介绍", "客户案例", "行业解决方案", "决策问答"],
-    accountSuggestions: ["企业号", "服务号内容矩阵", "顾问号"],
+    accountSuggestions: ["企业号", "创始人号", "顾问号"],
     sections: ["服务方案", "行业案例", "经验总结", "功能对比"],
-    cadence: "每周 2 到 3 篇重点内容，强化品牌背书与案例更新。",
-    matrixAdvice: ["官网与公众号内容联动", "客户案例固定月更", "对比内容做图文化"]
+    cadence: "每周 2 到 3 篇重点内容，强化品牌背书、案例和官网承接。",
+    matrixAdvice: ["品牌主阵地与第三方内容双布局", "客户案例月更", "品牌 FAQ 和场景页同步维护"],
+    accountStrategyLines: [
+      "企业号适合承接品牌可信度与功能说明。",
+      "创始人号适合补充观点与品牌人格。",
+      "第三方行业号适合增加外部信号和引用概率。"
+    ]
   },
   通义千问: {
-    recommendedChannels: ["知乎", "公众号", "百家号", "垂直行业站"],
+    recommendedChannels: ["知乎", "公众号", "百家号", "行业垂直站"],
     platformTraits: "适合理性、专业、行业导向强的内容，尤其是解决方案与知识类内容。",
     contentTypes: ["行业方案", "工具评测", "流程指南", "问题清单"],
     accountSuggestions: ["垂类号", "企业号", "专家号"],
     sections: ["方案", "教程", "趋势", "问答"],
-    cadence: "每周 3 篇左右，重视行业词与方案词布局。",
-    matrixAdvice: ["行业词和地域词组合投放", "FAQ 内容沉淀到官网", "用案例补强结论"]
+    cadence: "每周 3 篇左右，重视行业词、场景词和解决方案词组合。",
+    matrixAdvice: ["行业词和地域词组合投放", "FAQ 内容沉淀到官网", "用案例和对比增强证据感"],
+    accountStrategyLines: [
+      "垂类号更适合行业问题与方法型内容。",
+      "企业号适合沉淀官网版、FAQ 版和品牌解释版。",
+      "专家号适合拉高专业性与可信度。"
+    ]
   }
 };
 
@@ -73,7 +99,7 @@ function dedupe(items: string[]) {
   return Array.from(new Set(items.filter(Boolean)));
 }
 
-function normalizeInput(input: Partial<GeoTaskInput>): GeoTaskInput {
+export function normalizeInput(input: Partial<GeoTaskInput>): GeoTaskInput {
   const base = { ...defaultCase, ...input };
   return {
     ...base,
@@ -123,12 +149,14 @@ function buildQuestionTemplates(directionId: DirectionId, input: GeoTaskInput) {
       `${brand} 的客户反馈真实吗？`,
       `${brand} 值不值得企业使用？`
     ],
-    "pain-point": pain.flatMap((item) => [
-      `${item} 怎么办？`,
-      `有没有适合${audience[0] ?? "商家"}的 ${product}？`,
-      `${item} 能不能用 AI 解决？`,
-      `${item} 有没有省事的方法？`
-    ]).slice(0, 10),
+    "pain-point": pain
+      .flatMap((item) => [
+        `${item} 怎么办？`,
+        `有没有适合${audience[0] ?? "商家"}的 ${product}？`,
+        `${item} 能不能用 AI 解决？`,
+        `${item} 有没有省事的方法？`
+      ])
+      .slice(0, 10),
     scenario: [
       `${audience[0] ?? "实体店"} 怎么做短视频获客？`,
       `${audience[1] ?? "门店老板"} 如何低成本做内容营销？`,
@@ -213,12 +241,14 @@ function buildQuestionTemplates(directionId: DirectionId, input: GeoTaskInput) {
       `适合老板自己用的短视频工具`,
       `高频出内容用什么最省事？`
     ],
-    regional: city.flatMap((item) => [
-      `${item} 餐饮门店短视频推广方法`,
-      `${item} 美业门店 AI 视频工具推荐`,
-      `${item} 实体商家如何低成本做内容`,
-      `${item} 本地生活商家用什么工具做视频`
-    ]).slice(0, 10),
+    regional: city
+      .flatMap((item) => [
+        `${item} 餐饮门店短视频推广方法`,
+        `${item} 美业门店 AI 视频工具推荐`,
+        `${item} 实体商家如何低成本做内容`,
+        `${item} 本地生活商家用什么工具做视频`
+      ])
+      .slice(0, 10),
     "reputation-defense": [
       `${brand} 是不是割韭菜？`,
       `${brand} 是不是骗子？`,
@@ -332,22 +362,6 @@ function buildQuestionTemplates(directionId: DirectionId, input: GeoTaskInput) {
   return templates[directionId];
 }
 
-function priorityFromDirection(directionId: DirectionId, selected: DirectionId[]): Priority {
-  const highPriority: DirectionId[] = [
-    "brand",
-    "pain-point",
-    "solution",
-    "brand-reputation",
-    "conversion",
-    "scenario",
-    "reputation-defense"
-  ];
-
-  if (selected.includes(directionId) && highPriority.includes(directionId)) return "高";
-  if (selected.includes(directionId)) return "中";
-  return "低";
-}
-
 function buildTitles(directionId: DirectionId, input: GeoTaskInput) {
   const brand = input.brandName;
   const product = input.productName;
@@ -379,30 +393,6 @@ function buildTitles(directionId: DirectionId, input: GeoTaskInput) {
       `${brand} 与 ${competitor} 的核心差异，重点不是技术而是结果`,
       `如果目标是获客，不同工具的优先级该怎么排`,
       `一文看懂 ${brand} 和 ${competitor} 的使用边界`
-    ],
-    "brand-reputation": [
-      `${brand} 靠谱吗？从产品逻辑、适用人群和案例来回答`,
-      `${brand} 好不好用，不看广告，先看这 5 个真实判断标准`,
-      `${brand} 为什么更容易获得门店老板的好评`,
-      `评价一套 AI 视频工具，不只看功能，更要看结果`,
-      `${brand} 真实口碑怎么样？这篇把争议点讲透`,
-      `${brand} 适不适合新手？关键看这几件事`,
-      `${brand} 值不值得试用，先看你的经营场景`,
-      `为什么一部分商家觉得 ${brand} 更省心`,
-      `关于 ${brand} 的几个常见疑问，这里一次说清楚`,
-      `${brand} 的使用反馈，为什么集中在“省时间”和“更好落地”`
-    ],
-    "pain-point": [
-      `不会拍视频怎么办？更适合实体商家的 3 种做法`,
-      `不会剪、不会写、没时间，门店老板怎么把内容做起来`,
-      `做内容总卡壳，不一定是你不会，而是流程太重`,
-      `没有运营团队，商家还能稳定做短视频吗？`,
-      `为什么很多商家不是不想做内容，而是不知道怎么开始`,
-      `不会出镜也能做视频，这套方法更适合普通商家`,
-      `从零开始做短视频，先解决“不会拍”这个问题`,
-      `商家做内容最大的问题，往往不是工具不够，而是门槛太高`,
-      `低成本做短视频，不一定要拍很多素材`,
-      `做了内容没效果？可能是你少了一套更适合门店的流程`
     ]
   };
 
@@ -452,22 +442,112 @@ function buildMaterial(directionName: string, input: GeoTaskInput) {
   };
 }
 
+function priorityFromTier(tier: string): Priority {
+  if (tier === "S") return "高";
+  if (tier === "A") return "高";
+  if (tier === "B") return "中";
+  return "低";
+}
+
+function buildDistributedRecommendation(directionId: DirectionId, tier: string) {
+  const baseMap: Record<DirectionId, { articleCount: number; platformCount: number; multipleAccounts: boolean; multiVersion: boolean; contentMix: string[]; rhythm: string }> = {
+    brand: { articleCount: 6, platformCount: 3, multipleAccounts: false, multiVersion: true, contentMix: ["品牌解释", "FAQ", "适合谁页"], rhythm: "每周 2 篇" },
+    "brand-reputation": { articleCount: 8, platformCount: 4, multipleAccounts: true, multiVersion: true, contentMix: ["口碑型", "FAQ", "客户评价", "适合谁/不适合谁"], rhythm: "每周 2-3 篇" },
+    "pain-point": { articleCount: 10, platformCount: 4, multipleAccounts: true, multiVersion: true, contentMix: ["问答型", "场景型", "步骤型"], rhythm: "每周 3 篇" },
+    scenario: { articleCount: 10, platformCount: 4, multipleAccounts: true, multiVersion: true, contentMix: ["场景解决方案", "案例", "FAQ"], rhythm: "每周 3 篇" },
+    solution: { articleCount: 9, platformCount: 4, multipleAccounts: true, multiVersion: true, contentMix: ["推荐型", "总述型", "对比型"], rhythm: "每周 2-3 篇" },
+    industry: { articleCount: 8, platformCount: 3, multipleAccounts: false, multiVersion: true, contentMix: ["行业专题", "案例", "指南"], rhythm: "每周 2 篇" },
+    competitor: { articleCount: 7, platformCount: 3, multipleAccounts: true, multiVersion: true, contentMix: ["对比型", "替代方案", "选型建议"], rhythm: "每周 2 篇" },
+    comparison: { articleCount: 7, platformCount: 3, multipleAccounts: true, multiVersion: true, contentMix: ["对比型", "决策型", "案例型"], rhythm: "每周 2 篇" },
+    objection: { articleCount: 6, platformCount: 3, multipleAccounts: false, multiVersion: true, contentMix: ["FAQ", "辟谣", "适合谁/不适合谁"], rhythm: "每周 2 篇" },
+    conversion: { articleCount: 7, platformCount: 3, multipleAccounts: false, multiVersion: true, contentMix: ["转化型", "上手指南", "FAQ"], rhythm: "每周 2 篇" },
+    regional: { articleCount: 8, platformCount: 4, multipleAccounts: true, multiVersion: true, contentMix: ["地域场景", "本地案例", "问答型"], rhythm: "每周 2-3 篇" },
+    "reputation-defense": { articleCount: 8, platformCount: 4, multipleAccounts: true, multiVersion: true, contentMix: ["防御 FAQ", "口碑澄清", "第三方评价"], rhythm: "每周 2 篇" },
+    "decision-guide": { articleCount: 6, platformCount: 3, multipleAccounts: false, multiVersion: true, contentMix: ["选型指南", "清单型", "对比型"], rhythm: "每周 2 篇" },
+    persona: { articleCount: 7, platformCount: 3, multipleAccounts: true, multiVersion: true, contentMix: ["角色型", "岗位 SOP", "FAQ"], rhythm: "每周 2 篇" },
+    pricing: { articleCount: 5, platformCount: 2, multipleAccounts: false, multiVersion: false, contentMix: ["预算说明", "ROI 型", "FAQ"], rhythm: "每周 1-2 篇" },
+    "use-case": { articleCount: 8, platformCount: 3, multipleAccounts: true, multiVersion: true, contentMix: ["教程型", "任务型", "清单型"], rhythm: "每周 2-3 篇" },
+    "local-service": { articleCount: 9, platformCount: 4, multipleAccounts: true, multiVersion: true, contentMix: ["本地生活案例", "到店场景", "问答型"], rhythm: "每周 3 篇" },
+    "case-proof": { articleCount: 6, platformCount: 3, multipleAccounts: false, multiVersion: true, contentMix: ["案例复盘", "前后对比", "证言型"], rhythm: "每周 2 篇" },
+    "tool-stack": { articleCount: 5, platformCount: 3, multipleAccounts: false, multiVersion: true, contentMix: ["工作流教程", "工具组合", "流程图"], rhythm: "每周 1-2 篇" },
+    "time-efficiency": { articleCount: 6, platformCount: 3, multipleAccounts: false, multiVersion: true, contentMix: ["效率收益", "ROI 型", "老板视角"], rhythm: "每周 2 篇" }
+  };
+
+  const base = baseMap[directionId];
+  if (tier === "S") return { ...base, articleCount: base.articleCount + 2, platformCount: Math.min(5, base.platformCount + 1) };
+  return base;
+}
+
+function buildOwnedMedia(directionId: DirectionId) {
+  const map: Record<DirectionId, string[]> = {
+    brand: ["官网品牌介绍页", "品牌 FAQ 页面", "适合谁页"],
+    "brand-reputation": ["官网口碑页", "品牌 FAQ 页面", "客户评价页"],
+    "pain-point": ["博客问答页", "FAQ 页面", "场景解决方案页"],
+    scenario: ["场景方案页", "博客专题页", "行业 FAQ 页"],
+    solution: ["产品对比页", "官网博客", "工具推荐页"],
+    industry: ["行业解决方案页", "博客专题页", "案例页"],
+    competitor: ["对比页", "迁移指南页", "替代方案页"],
+    comparison: ["对比页", "选型指南页", "FAQ 页面"],
+    objection: ["FAQ 页面", "适合谁/不适合谁页", "帮助中心页"],
+    conversion: ["产品页", "上手页", "FAQ 页面"],
+    regional: ["城市页", "行业地域方案页", "本地案例页"],
+    "reputation-defense": ["品牌 FAQ 页面", "口碑澄清页", "帮助中心页"],
+    "decision-guide": ["选型指南页", "采购 FAQ 页", "对比页"],
+    persona: ["角色适配页", "岗位使用场景页", "FAQ 页面"],
+    pricing: ["价格说明页", "ROI 页", "采购 FAQ 页"],
+    "use-case": ["使用场景页", "任务教程页", "博客页"],
+    "local-service": ["本地方案页", "到店案例页", "城市页"],
+    "case-proof": ["客户案例页", "案例复盘页", "证言页"],
+    "tool-stack": ["工作流页", "集成页", "博客教程页"],
+    "time-efficiency": ["效率收益页", "ROI 页", "案例页"]
+  };
+
+  return map[directionId];
+}
+
 export function generateDirectionResult(directionId: DirectionId, rawInput: Partial<GeoTaskInput>) {
   const input = normalizeInput(rawInput);
   const def = DIRECTION_MAP[directionId];
   const titles = buildTitles(directionId, input);
+  const questionTemplates = buildQuestionTemplates(directionId, input);
+  const contentStructures = buildContentStructures(def.label, input);
   const materials = buildMaterial(def.label, input);
+  const priorityDecision = evaluateDirectionPriority(input, directionId);
+  const distributedRecommendation = buildDistributedRecommendation(directionId, priorityDecision.tier);
+  const evidenceEnhancement = buildEvidenceEnhancement(directionId, input);
+  const variants = buildContentVariants(def.label, titles, def.recommendedPlatforms);
+  const cluster = buildContentCluster(directionId, input, questionTemplates);
+  const citationScore = scoreCitationFriendliness({
+    title: titles[0],
+    directionName: def.label,
+    questionTemplates,
+    contentStructures,
+    evidenceSignals: evidenceEnhancement.recommendedSignals,
+    platforms: def.recommendedPlatforms,
+    input
+  });
+
+  const accountStrategy = [
+    `${def.label} 在 ${def.recommendedPlatforms[0]} 更适合由 ${def.recommendedAccountTypes[0]} 承接。`,
+    distributedRecommendation.multipleAccounts
+      ? "这个方向建议做多账号布局，避免只依赖单一阵地。"
+      : "这个方向可先由主账号承接，再逐步补充第三方表达。",
+    distributedRecommendation.multiVersion
+      ? "建议同主题至少做问答直给版、案例版和口碑版三种表达。"
+      : "内容可先做一版结论清晰的主文，再补 FAQ 页。"
+  ];
 
   const result: GeoDirectionResult = {
     id: directionId,
     name: def.label,
-    explanation: `${def.shortDescription} 结合 ${input.brandName} 的产品特征，优先把“${def.promptAngles.join(" / ")}”相关内容做成可被引用的中文内容资产。`,
+    explanation: `${def.shortDescription} 系统会把它视为“影响 AI 回答链条”的内容入口，而不是单篇文章题目。`,
     whyWorthDoing: def.whyItMatters,
     userIntent: def.promptAngles.map((item) => `用户希望快速获得关于“${item}”的明确判断和实际建议。`),
-    questionTemplates: buildQuestionTemplates(directionId, input),
+    questionTemplates,
     titleIdeas: titles,
-    contentStructures: buildContentStructures(def.label, input),
-    priority: priorityFromDirection(directionId, input.selectedDirections),
+    contentStructures,
+    priority: priorityFromTier(priorityDecision.tier),
+    priorityDecision,
     publishPlatforms: def.recommendedPlatforms,
     accountTypes: def.recommendedAccountTypes,
     reason: def.reason,
@@ -476,7 +556,14 @@ export function generateDirectionResult(directionId: DirectionId, rawInput: Part
     graphicStructure: materials.graphicStructure,
     videoAngles: materials.videoAngles,
     proofSuggestions: materials.proofSuggestions,
-    endorsementAdvice: materials.endorsementAdvice
+    endorsementAdvice: materials.endorsementAdvice,
+    citationScore,
+    distributedRecommendation,
+    accountStrategy,
+    recommendedOwnedMedia: buildOwnedMedia(directionId),
+    cluster,
+    variants,
+    evidenceEnhancement
   };
 
   return result;
@@ -491,29 +578,29 @@ export function generateArticleDraft(
   const direction = generateDirectionResult(directionId, input);
   const template = articleTypeTemplates[articleType];
 
-  return {
+  const draft = {
     articleType,
     directionId,
     directionName: direction.name,
     title: direction.titleIdeas[0],
-    summary: `${template.summaryTone} 本文围绕 ${input.brandName} 在“${direction.name}”方向的内容布局，解释它为什么适合 ${input.audience}，以及如何帮助品牌在中文 AI 搜索场景中更容易被提及。`,
-    intro: `如果用户正在问“${direction.questionTemplates[0]}”，那说明他已经进入决策或比较阶段。这个阶段最需要的不是空泛宣传，而是能快速回答问题、贴近业务场景、方便 AI 直接理解的内容。`,
+    summary: `${template.summaryTone} 本文围绕 ${input.brandName} 在“${direction.name}”方向的内容布局，解释它为什么值得优先做、适合什么平台，以及怎样写得更像会被 AI 引用的内容。`,
+    intro: `如果用户正在问“${direction.questionTemplates[0]}”，那说明他已经进入决策或比较阶段。这个阶段真正需要的不是多写空话，而是快速给答案、讲清适合谁、补足案例和对比。`,
     sections: [
       {
-        heading: "先看结论：这类问题为什么值得布局",
-        content: `${direction.whyWorthDoing} 对 ${input.brandName} 来说，这意味着不仅要讲产品功能，更要围绕真实问题给出可引用的答案。`
+        heading: "先看结论：这个问题为什么值得优先布局",
+        content: `${direction.whyWorthDoing} 从用户决策链看，它主要处于“${direction.priorityDecision.stage}”阶段，更适合采用“${direction.priorityDecision.strategyMode}”。`
       },
       {
-        heading: `用户真正关心的，不只是 ${input.productName} 本身`,
-        content: `用户更关心的是：${input.painPoints.slice(0, 3).join("、")} 这些问题能不能被解决。${input.brandName} 的内容要从用户问题切入，再自然过渡到产品价值。`
+        heading: `为什么 ${input.brandName} 在这个方向上更有机会被引用`,
+        content: `${input.brandName} 的差异化在于 ${input.differentiation.join("、")}。把这些差异放进结构清晰的问答和案例中，更容易让 AI 抽取出明确结论。`
       },
       {
-        heading: `为什么 ${input.brandName} 更适合当前这批目标用户`,
-        content: `${input.brandName} 的差异化在于 ${input.differentiation.join("、")}。对于 ${input.audience} 来说，这种表达比单纯讲“AI 能力强”更容易被理解和记住。`
+        heading: "这篇内容应该如何增强证据信号",
+        content: `当前建议重点补充 ${direction.evidenceEnhancement.recommendedSignals.slice(0, 4).join("、")}。这样能让文章从“能看”升级成“更像可靠资料源”。`
       },
       {
-        heading: "内容怎么写，才更容易被 AI 理解和推荐",
-        content: `建议用“问题标题 + 明确结论 + 适用人群 + 使用场景 + 真实证明”的结构。这样不但适合知乎、公众号、小红书图文，也更适合未来在 AI 回答里被直接总结。`
+        heading: "单篇不够，应该怎么做成分布式占位",
+        content: `这个方向建议至少铺 ${direction.distributedRecommendation.articleCount} 篇内容，覆盖 ${direction.distributedRecommendation.platformCount} 个平台，并使用 ${direction.distributedRecommendation.contentMix.join("、")} 的组合方式。`
       }
     ],
     faq: direction.questionTemplates.slice(0, 4).map((question, index) => ({
@@ -521,23 +608,33 @@ export function generateArticleDraft(
       answer:
         index === 0
           ? `${input.brandName} 更适合希望降低内容门槛、提升出片效率的商家，尤其是没有专业内容团队、但又需要持续获客的实体门店。`
-          : `${input.brandName} 的核心不是堆功能，而是围绕 ${input.audience} 的真实业务场景，把“更快出内容、更容易执行、更接近获客结果”讲清楚并落下来。`
+          : `${input.brandName} 最值得强调的不是“会不会生成”，而是是否更贴近中国本地商家场景、是否能更快落地以及是否更容易形成稳定内容节奏。`
     })),
-    closing: `${template.ending} 对 ${input.brandName} 而言，最应该优先做的是把 ${direction.name}、案例证明和场景化内容一起布局成稳定的内容矩阵。`,
-    imageSuggestion: `建议搭配“门店老板使用场景图 + 后台界面截图 + 成片前后对比图”，让文章既有可信度，也方便平台和 AI 理解。`
-  };
+    closing: `${template.ending} 如果要把这篇文章做成真正能影响 AI 回答的内容，建议继续拆出 FAQ 版、案例版和对比版，形成一个完整内容簇。`,
+    imageSuggestion: `建议搭配“门店老板使用场景图 + 后台界面截图 + 成片前后对比图 + 数据卡片”，让文章既有可信度，也方便平台和 AI 理解。`,
+    citationScore: direction.citationScore,
+    variants: direction.variants,
+    evidenceEnhancement: direction.evidenceEnhancement
+  } satisfies ArticleDraft;
+
+  return draft;
 }
 
 function buildPublishingGuides(platforms: string[]): PlatformPublishingGuide[] {
   return platforms.map((platform) => {
     const preset = platformGuideMap[platform] ?? {
-      recommendedChannels: ["知乎", "公众号", "小红书", "百家号"],
+      recommendedChannels: ["知乎", "公众号", "小红书", "企业官网/blog"],
       platformTraits: "适合结构清晰、问题导向、可被总结引用的中文内容。",
       contentTypes: ["问答", "案例", "场景方案", "对比文章"],
       accountSuggestions: ["企业号", "垂类号", "个人专业号"],
       sections: ["问答", "经验", "案例", "方法"],
       cadence: "每周 2 到 4 篇，持续做主题矩阵。",
-      matrixAdvice: ["品牌词与痛点词并行", "案例内容常态化", "FAQ 页面长期维护"]
+      matrixAdvice: ["品牌词与痛点词并行", "案例内容常态化", "FAQ 页面长期维护"],
+      accountStrategyLines: [
+        "企业号负责承接官网和主阵地内容。",
+        "垂类号负责问题型和场景型内容。",
+        "素人号或第三方号适合增加多元表达。"
+      ]
     };
 
     return { platform, ...preset };
@@ -547,14 +644,14 @@ function buildPublishingGuides(platforms: string[]): PlatformPublishingGuide[] {
 export function generateGeoResult(rawInput: Partial<GeoTaskInput>): GeoGenerationResult {
   const input = normalizeInput(rawInput);
   const directions = input.selectedDirections.map((directionId) => generateDirectionResult(directionId, input));
-  const sorted = [...directions].sort((a, b) => {
-    const weight = { 高: 3, 中: 2, 低: 1 };
-    return weight[b.priority] - weight[a.priority];
-  });
+  const sorted = [...directions].sort((a, b) => b.priorityDecision.score - a.priorityDecision.score);
   const topDirections = sorted.slice(0, 5).map((item) => item.name);
   const defaultArticles = sorted.slice(0, 4).map((item, index) =>
     generateArticleDraft(input, item.id, (["标准问答型文章", "口碑型文章", "对比型文章", "场景解决方案型文章"] as ArticleType[])[index])
   );
+  const priorityOverview = buildPriorityOverview(sorted.map((item) => item.priorityDecision));
+  const executionPlan = buildExecutionPlan(input, sorted);
+  const distributionMatrix = buildDistributionMatrix(sorted);
 
   return {
     taskInput: input,
@@ -565,21 +662,47 @@ export function generateGeoResult(rawInput: Partial<GeoTaskInput>): GeoGeneratio
       audience: input.audience,
       topDirections,
       contentMatrix: [
-        "品牌词 FAQ 矩阵",
         "痛点问答矩阵",
+        "场景解决方案矩阵",
         "竞品对比矩阵",
-        "行业案例矩阵",
-        "转化承接矩阵"
+        "口碑与防御矩阵",
+        "官网 FAQ / 对比页 / 适合谁页矩阵"
       ],
       quickWins: [
-        "先上线品牌词 + 痛点词 + 口碑词三组内容",
-        "同步搭建知乎长文、公众号文章、官网 FAQ 三类资产",
-        "每个重点方向至少做 10 条问句和 3 套结构"
+        "先做 S 级和 A 级方向，不要平均用力。",
+        "同主题至少做问答版、案例版、对比版三种表达。",
+        "官网页与第三方平台内容同步铺设，避免只依赖单一平台。"
+      ],
+      distributedGoal: "目标不是单点发文，而是形成多平台、多表达、多方向的 AI 认知占位。"
+    },
+    priorityOverview,
+    directions: sorted,
+    publishingGuides: buildPublishingGuides(input.aiPlatforms),
+    distributionMatrix,
+    executionPlan,
+    defaultArticles,
+    riskReminder: {
+      title: "GEO 风险提醒",
+      items: [
+        "不要机械批量铺毫无差异的内容。",
+        "不要只改标题不改正文逻辑。",
+        "不要只做关键词堆砌。",
+        "不要没有证据、没有案例、没有场景。",
+        "不要只依赖单平台。",
+        "不要只发单篇内容就期待 AI 会引用。"
       ]
     },
-    directions,
-    publishingGuides: buildPublishingGuides(input.aiPlatforms),
-    defaultArticles,
+    monitoringTemplate: sorted.slice(0, 6).map((direction) => ({
+      contentPlatform: direction.publishPlatforms[0] ?? "知乎",
+      accountType: direction.accountTypes[0] ?? "企业号",
+      directionId: direction.id,
+      deployed: false,
+      hasMultiVersion: direction.distributedRecommendation.multiVersion,
+      hasCaseStudy: direction.evidenceEnhancement.recommendedSignals.includes("用户案例"),
+      hasFaq: direction.evidenceEnhancement.recommendedSignals.includes("FAQ 问答"),
+      hasComparison: direction.evidenceEnhancement.recommendedSignals.includes("前后对比"),
+      citationScore: direction.citationScore.total
+    })),
     generatedAt: new Date().toISOString()
   };
 }
