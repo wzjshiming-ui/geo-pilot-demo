@@ -125,6 +125,59 @@ export function ResultsDashboard() {
       </SectionCard>
 
       <SectionCard
+        title="AI 产品理解与知识库沉淀"
+        desc="系统先理解你的产品，再把关键信息沉淀成后续可复用的知识库，而不是直接跳去写文章。"
+      >
+        <div className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
+          <div className="space-y-4">
+            <div className="rounded-3xl border border-slate-100 bg-white p-5">
+              <div className="mb-2 text-sm font-semibold text-slate-800">品牌理解摘要</div>
+              <p className="text-sm leading-7 text-slate-600">{result.knowledgeBase.brandSummary}</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-5">
+              <div className="mb-2 text-sm font-semibold text-slate-800">产品定位表达</div>
+              <p className="text-sm leading-7 text-slate-600">{result.knowledgeBase.productPositioning}</p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <SimpleList title="核心目标人群" items={result.knowledgeBase.targetUsers} />
+              <SimpleList title="核心使用场景" items={result.knowledgeBase.coreScenes} />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <SimpleList title="建议沉淀进知识库的卖点" items={result.knowledgeBase.strengths} />
+            <SimpleList title="建议长期保持一致的差异化" items={result.knowledgeBase.differentiators} />
+            <SimpleList title="FAQ 种子问题" items={result.knowledgeBase.faqSeeds} />
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-3xl border border-brand-100 bg-brand-50/70 p-5">
+            <div className="mb-3 text-sm font-semibold text-brand-800">AI 二次互动补充问题</div>
+            <div className="grid gap-3">
+              {result.knowledgeBase.clarificationQuestions.map((item) => (
+                <div key={item.question} className="rounded-2xl bg-white px-4 py-4">
+                  <div className="font-medium text-slate-900">{item.question}</div>
+                  <div className="mt-2 text-sm leading-6 text-slate-600">{item.reason}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-3xl border border-slate-100 bg-white p-5">
+            <div className="mb-3 text-sm font-semibold text-slate-800">知识库沉淀卡片</div>
+            <div className="grid gap-3">
+              {result.knowledgeBase.cards.map((card) => (
+                <div key={card.title} className="rounded-2xl bg-slate-50 px-4 py-4">
+                  <div className="font-medium text-slate-900">{card.title}</div>
+                  <div className="mt-2 text-sm leading-6 text-slate-600">{card.content}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard
         title="AI 引用友好度总览"
         desc="系统会从问答匹配、结构清晰度、证据感和多平台适配度几个维度做评分。"
         className="scroll-mt-24"
@@ -273,6 +326,23 @@ export function ResultsDashboard() {
                 <div>建议账号：{step.accountTypes.join("、")}</div>
                 <div>建议方向：{step.directions.join("、")}</div>
                 <div>内容组合：{step.contentMix.join("、")}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+
+      <SectionCard title="GEO 专业指导" desc="用户会判断你是否专业，往往就看这些策略细节有没有讲透。">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {result.directions.slice(0, 6).map((direction) => (
+            <div key={direction.id} className="rounded-3xl border border-slate-100 bg-white p-5">
+              <div className="mb-3 text-lg font-semibold text-ink">{direction.name}</div>
+              <div className="grid gap-2 text-sm text-slate-600">
+                <div>发布时间：{direction.professionalGuidance.publishTiming}</div>
+                <div>账号权重：{direction.professionalGuidance.accountWeightAdvice}</div>
+                <div>覆盖密度：{direction.professionalGuidance.coverageDensityAdvice}</div>
+                <div>评论互动：{direction.professionalGuidance.commentSeedingAdvice}</div>
+                <div>投流放大：{direction.professionalGuidance.paidAmplificationAdvice}</div>
               </div>
             </div>
           ))}

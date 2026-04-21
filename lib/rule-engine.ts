@@ -16,6 +16,8 @@ import { buildDistributionMatrix } from "@/lib/distribution-matrix-engine";
 import { buildContentCluster, buildContentVariants } from "@/lib/content-cluster-engine";
 import { buildEvidenceEnhancement } from "@/lib/evidence-enhancer";
 import { buildExecutionPlan } from "@/lib/execution-plan-engine";
+import { buildProductKnowledgeBase } from "@/lib/knowledge-base-engine";
+import { buildProfessionalGuidance } from "@/lib/geo-guidance-engine";
 
 const articleTypeTemplates: Record<ArticleType, { summaryTone: string; ending: string }> = {
   标准问答型文章: {
@@ -563,7 +565,8 @@ export function generateDirectionResult(directionId: DirectionId, rawInput: Part
     recommendedOwnedMedia: buildOwnedMedia(directionId),
     cluster,
     variants,
-    evidenceEnhancement
+    evidenceEnhancement,
+    professionalGuidance: buildProfessionalGuidance(input, directionId)
   };
 
   return result;
@@ -652,6 +655,7 @@ export function generateGeoResult(rawInput: Partial<GeoTaskInput>): GeoGeneratio
   const priorityOverview = buildPriorityOverview(sorted.map((item) => item.priorityDecision));
   const executionPlan = buildExecutionPlan(input, sorted);
   const distributionMatrix = buildDistributionMatrix(sorted);
+  const knowledgeBase = buildProductKnowledgeBase(input);
 
   return {
     taskInput: input,
@@ -675,6 +679,7 @@ export function generateGeoResult(rawInput: Partial<GeoTaskInput>): GeoGeneratio
       ],
       distributedGoal: "目标不是单点发文，而是形成多平台、多表达、多方向的 AI 认知占位。"
     },
+    knowledgeBase,
     priorityOverview,
     directions: sorted,
     publishingGuides: buildPublishingGuides(input.aiPlatforms),

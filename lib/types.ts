@@ -116,6 +116,37 @@ export interface EvidenceEnhancement {
   whyBetterForAi: string[];
 }
 
+export interface KnowledgeBaseCard {
+  title: string;
+  content: string;
+}
+
+export interface ClarificationQuestion {
+  question: string;
+  reason: string;
+}
+
+export interface ProductKnowledgeBase {
+  brandSummary: string;
+  productPositioning: string;
+  targetUsers: string[];
+  coreScenes: string[];
+  strengths: string[];
+  differentiators: string[];
+  faqSeeds: string[];
+  clarificationQuestions: ClarificationQuestion[];
+  cards: KnowledgeBaseCard[];
+}
+
+export interface GeoProfessionalGuidance {
+  publishTiming: string;
+  accountWeightAdvice: string;
+  coverageDensityAdvice: string;
+  commentSeedingAdvice: string;
+  paidAmplificationAdvice: string;
+  riskBoundary: string;
+}
+
 export interface GeoDirectionResult {
   id: DirectionId;
   name: string;
@@ -143,6 +174,7 @@ export interface GeoDirectionResult {
   cluster: ContentCluster;
   variants: ContentVariant[];
   evidenceEnhancement: EvidenceEnhancement;
+  professionalGuidance: GeoProfessionalGuidance;
 }
 
 export interface ArticleDraft {
@@ -250,6 +282,7 @@ export interface MonitoringPlaceholder {
 export interface GeoGenerationResult {
   taskInput: GeoTaskInput;
   summary: GeoStrategySummary;
+  knowledgeBase: ProductKnowledgeBase;
   priorityOverview: PriorityOverview;
   directions: GeoDirectionResult[];
   publishingGuides: PlatformPublishingGuide[];

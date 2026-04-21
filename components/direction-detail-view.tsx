@@ -84,6 +84,23 @@ export function DirectionDetailView({ directionId }: { directionId: string }) {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
+        <SectionCard title="专业 GEO 指导" desc="不是只给内容，还要告诉用户实际执行时有哪些讲究。">
+          <ListBlock
+            items={[
+              `发布时间建议：${direction.professionalGuidance.publishTiming}`,
+              `账号权重建议：${direction.professionalGuidance.accountWeightAdvice}`,
+              `覆盖密度建议：${direction.professionalGuidance.coverageDensityAdvice}`,
+              `评论互动建议：${direction.professionalGuidance.commentSeedingAdvice}`,
+              `投流放大建议：${direction.professionalGuidance.paidAmplificationAdvice}`
+            ]}
+          />
+        </SectionCard>
+        <SectionCard title="风险边界提醒" desc="系统会明确告诉用户什么是专业做法，什么是高风险做法。">
+          <ListBlock items={[direction.professionalGuidance.riskBoundary]} />
+        </SectionCard>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
         <SectionCard title="用户搜索 / 提问意图" desc="这些问题是该方向最适合承接的 AI 问答意图。">
           <ListBlock items={direction.userIntent} />
         </SectionCard>
