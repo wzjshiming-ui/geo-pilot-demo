@@ -21,6 +21,7 @@ export const defaultCase: GeoTaskInput = {
   brandAwareness: "新品牌",
   decisionCost: "高",
   negativeRisk: "中",
+  knowledgeNotes: [],
   aiPlatforms: ["豆包", "Kimi", "腾讯元宝", "通义千问"],
   customPlatforms: [],
   selectedDirections: [

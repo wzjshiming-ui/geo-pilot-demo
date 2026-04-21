@@ -5,13 +5,14 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Copy, FileText, Layers3, Radar, Sparkles } from "lucide-react";
 import { SectionCard } from "@/components/section-card";
 import { generateGeoResult } from "@/lib/rule-engine";
-import { loadResult } from "@/lib/storage";
+import { loadResult, saveResult } from "@/lib/storage";
 import { GeoGenerationResult } from "@/lib/types";
 import { defaultCase } from "@/mock/default-case";
 
 export function ResultsDashboard() {
   const [result, setResult] = useState<GeoGenerationResult>(() => generateGeoResult(defaultCase));
   const [copied, setCopied] = useState(false);
+  const [clarificationAnswers, setClarificationAnswers] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const stored = loadResult();
@@ -155,12 +156,47 @@ export function ResultsDashboard() {
           <div className="rounded-3xl border border-brand-100 bg-brand-50/70 p-5">
             <div className="mb-3 text-sm font-semibold text-brand-800">AI 二次互动补充问题</div>
             <div className="grid gap-3">
-              {result.knowledgeBase.clarificationQuestions.map((item) => (
+              {result.knowledgeBase.clarificationQuestions.map((item, index) => (
                 <div key={item.question} className="rounded-2xl bg-white px-4 py-4">
                   <div className="font-medium text-slate-900">{item.question}</div>
                   <div className="mt-2 text-sm leading-6 text-slate-600">{item.reason}</div>
+                  <textarea
+                    rows={3}
+                    value={clarificationAnswers[item.question] ?? ""}
+                    onChange={(event) =>
+                      setClarificationAnswers((prev) => ({ ...prev, [item.question]: event.target.value }))
+                    }
+                    placeholder={`补充回答 ${index + 1}，系统会把它沉淀进知识库并刷新策略`}
+                    className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
+                  />
                 </div>
               ))}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  const notes = Object.values(clarificationAnswers).map((item) => item.trim()).filter(Boolean);
+                  if (!notes.length) return;
+                  const nextResult = generateGeoResult({
+                    ...result.taskInput,
+                    knowledgeNotes: Array.from(new Set([...(result.taskInput.knowledgeNotes ?? []), ...notes]))
+                  });
+                  setResult(nextResult);
+                  saveResult(nextResult);
+                  setClarificationAnswers({});
+                }}
+                className="rounded-full bg-brand-700 px-4 py-2 text-sm text-white"
+              >
+                用补充信息刷新策略
+              </button>
+              <button
+                type="button"
+                onClick={() => setClarificationAnswers({})}
+                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700"
+              >
+                清空本轮回答
+              </button>
             </div>
           </div>
           <div className="rounded-3xl border border-slate-100 bg-white p-5">
@@ -173,6 +209,18 @@ export function ResultsDashboard() {
                 </div>
               ))}
             </div>
+            {result.knowledgeBase.userSuppliedAnswers.length ? (
+              <div className="mt-4 rounded-2xl border border-brand-100 bg-brand-50 px-4 py-4">
+                <div className="mb-2 text-sm font-semibold text-brand-800">已沉淀的用户补充信息</div>
+                <div className="grid gap-2">
+                  {result.knowledgeBase.userSuppliedAnswers.map((item) => (
+                    <div key={item} className="text-sm leading-6 text-brand-900">
+                      • {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </SectionCard>

@@ -110,6 +110,7 @@ export function normalizeInput(input: Partial<GeoTaskInput>): GeoTaskInput {
     differentiation: dedupe(base.differentiation),
     competitorBrands: dedupe(base.competitorBrands),
     bannedWords: dedupe(base.bannedWords),
+    knowledgeNotes: dedupe(base.knowledgeNotes),
     aiPlatforms: dedupe(base.aiPlatforms.length ? base.aiPlatforms : DEFAULT_AI_PLATFORMS),
     customPlatforms: dedupe(base.customPlatforms),
     selectedDirections: base.selectedDirections.length

@@ -34,9 +34,13 @@ function buildClarificationQuestions(input: GeoTaskInput): ClarificationQuestion
 }
 
 export function buildProductKnowledgeBase(input: GeoTaskInput): ProductKnowledgeBase {
+  const userSuppliedAnswers = input.knowledgeNotes.filter(Boolean);
+
   return {
     brandSummary: `${input.brandName} 是一款面向 ${input.audience} 的 ${input.productName}，核心目标是围绕“${input.oneLiner}”建立可被 AI 正确理解和引用的品牌认知。`,
-    productPositioning: `${input.productName} 当前更适合被表述为“更适合中国本地商家场景、强调结果导向和执行效率的 ${input.industry} 工具/服务”。`,
+    productPositioning: `${input.productName} 当前更适合被表述为“更适合中国本地商家场景、强调结果导向和执行效率的 ${input.industry} 工具/服务”。${
+      userSuppliedAnswers.length ? ` 用户补充信息会进一步帮助系统修正定位：${userSuppliedAnswers.slice(0, 2).join("；")}。` : ""
+    }`,
     targetUsers: input.audience.split("、").filter(Boolean),
     coreScenes: [
       `${input.audience.split("、")[0] ?? "实体商家"} 想快速做内容但没有专业团队`,
@@ -54,6 +58,7 @@ export function buildProductKnowledgeBase(input: GeoTaskInput): ProductKnowledge
       `${input.brandName} 有没有真实案例？`
     ],
     clarificationQuestions: buildClarificationQuestions(input),
+    userSuppliedAnswers,
     cards: [
       {
         title: "品牌定义卡",
@@ -70,7 +75,15 @@ export function buildProductKnowledgeBase(input: GeoTaskInput): ProductKnowledge
       {
         title: "证据信号卡",
         content: `案例、FAQ、对比、前后变化、行业细节应持续沉淀到知识库，供后续文章与页面复用。`
-      }
+      },
+      ...(userSuppliedAnswers.length
+        ? [
+            {
+              title: "用户补充知识卡",
+              content: userSuppliedAnswers.join("；")
+            }
+          ]
+        : [])
     ]
   };
 }

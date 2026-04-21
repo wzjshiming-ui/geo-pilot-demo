@@ -63,6 +63,7 @@ export interface GeoTaskInput {
   brandAwareness: BrandAwareness;
   decisionCost: DecisionCost;
   negativeRisk: RiskLevel;
+  knowledgeNotes: string[];
 }
 
 export interface CitationScore {
@@ -135,6 +136,7 @@ export interface ProductKnowledgeBase {
   differentiators: string[];
   faqSeeds: string[];
   clarificationQuestions: ClarificationQuestion[];
+  userSuppliedAnswers: string[];
   cards: KnowledgeBaseCard[];
 }
 
